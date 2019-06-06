@@ -1,7 +1,15 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MapView } from "expo";
+import DatastoreAPI from './datastoreAPI'
+
+const _XHR = GLOBAL.originalXMLHttpRequest ?  
+GLOBAL.originalXMLHttpRequest :           
+GLOBAL.XMLHttpRequest   
+
 export default class App extends React.Component {
+
+XMLHttpRequest = _XHR
 
   constructor(props) {
     super(props);
@@ -17,17 +25,11 @@ export default class App extends React.Component {
   }
 
   fetchMarkerData() {
-    fetch('https://feeds.citibikenyc.com/stations/stations.json')
-      .then((response) => response.json())
-      .then((responseJson) => {
-        this.setState({
-          isLoading: false,
-          markers: responseJson.stationBeanList,
-        });
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    const data = new DatastoreAPI();
+
+    data.get({}, (...props)=>{
+      console.log(props[1].data)
+    })
   }
 
   render() {
@@ -40,8 +42,9 @@ export default class App extends React.Component {
           longitude: -73.99392888,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
-        }}
-      >
+        }}>
+
+        {/* 
         {this.state.isLoading ? null : this.state.markers.map((marker, index) => {
           const coords = {
             latitude: marker.latitude,
@@ -58,7 +61,9 @@ export default class App extends React.Component {
               description={metadata}
             />
           );
-        })}
+        })} */}
+
+
       </MapView>
 
     );
