@@ -3,6 +3,10 @@ import MapView, { Polyline } from 'react-native-maps';
 import DatastoreAPI from './datastoreAPI'
 import { Button } from 'react-native';
 import { Constants, Components } from 'expo';
+import MapViewDirections from 'react-native-maps-directions';
+
+const origin = {latitude: 37.3318456, longitude: -122.0296002};
+const destination = {latitude: 37.771707, longitude: -122.4053769};
 
 const APIKEY = 'AIzaSyCO0Nc1bNzKeqTzjcRVczqR53F7KUe7oDM'
 
@@ -53,21 +57,24 @@ export default class App extends React.Component {
 
         const destination = json[i + 1].lat + ',' + json[i + 1].lng;
 
-        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${APIKEY}&mode=${mode}`;
+        // const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${APIKEY}&mode=${mode}`;
+        // fetch(url)
+        //   .then(response => response.json())
+        //   .then(responseJson => {
+        //     if (responseJson.routes.length) {
+        //       markers = [...markers, ...(this.decode(responseJson.routes[0].overview_polyline.points))]\
+        //       this.setState({
+        //         markers
+        //       })
+        //     }
+        //   }).catch(e => { console.warn(e) });
 
-        fetch(url)
-          .then(response => response.json())
-          .then(responseJson => {
-            if (responseJson.routes.length) {
+        markers = [...markers, {origin, destination}]
 
-              markers = [...markers, ...(this.decode(responseJson.routes[0].overview_polyline.points))]
-
-              this.setState({
-                markers
-              })
-            }
-          }).catch(e => { console.warn(e) });
       }
+      this.setState({
+          markers
+      });
 
       const mode = 'driving';
 
@@ -87,14 +94,14 @@ export default class App extends React.Component {
 
         <MapView style={{ flex: 1 }} 
         provider="google"
-        region={{
-          latitude: 32.759288351948356,
-          longitude: -117.14747565600584,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421
-        }}>
+>
+{this.state.markers.map((marker=><MapViewDirections
+  {...marker}
+  apikey={APIKEY}
+/>))}
 
-          <Polyline
+
+          {/* <Polyline
             coordinates={this.state.markers}
             strokeColor="#000"
             strokeColors={[
@@ -106,7 +113,7 @@ export default class App extends React.Component {
               '#7F0000'
             ]}
             strokeWidth={6}
-          />
+          /> */}
 
         </MapView>
         <Button
