@@ -1,5 +1,5 @@
 import React from "react";
-import MapView, { Polyline } from 'react-native-maps';
+import MapView, { Polyline, Marker } from 'react-native-maps';
 import DatastoreAPI from './datastoreAPI'
 import { Button } from 'react-native';
 import { Constants, Components } from 'expo';
@@ -7,6 +7,7 @@ import MapViewDirections from 'react-native-maps-directions';
 
 const origin = {latitude: 37.3318456, longitude: -122.0296002};
 const destination = {latitude: 37.771707, longitude: -122.4053769};
+const center = {latitude: 32.7174, longitude: -117.1574};
 
 const APIKEY = 'AIzaSyCO0Nc1bNzKeqTzjcRVczqR53F7KUe7oDM'
 
@@ -73,7 +74,7 @@ export default class App extends React.Component {
 
       }
       this.setState({
-          markers
+          markers, points: props[1].data.routePoints
       });
 
       const mode = 'driving';
@@ -93,35 +94,35 @@ export default class App extends React.Component {
       <React.Fragment>
 
         <MapView style={{ flex: 1 }} 
-        provider="google"
->
-{this.state.markers.map((marker=><MapViewDirections
-  {...marker}
-  apikey={APIKEY}
-/>))}
+            initialRegion={{
+...center,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+        provider="google">
 
+          {this.state.markers.map((marker=><MapViewDirections
+          strokeWidth={3} strokeColor="hotpink"
 
-          {/* <Polyline
-            coordinates={this.state.markers}
-            strokeColor="#000"
-            strokeColors={[
-              '#7F0000',
-              '#00000000', 
-              '#B24112',
-              '#E5845C',
-              '#238C23',
-              '#7F0000'
-            ]}
-            strokeWidth={6}
-          /> */}
+            {...marker}
+            apikey={APIKEY}
+          />))}
+
+{this.state.points ? this.state.points.map((marker=><Marker
+
+            coordinate={{latitude: marker.lat, longitude: marker.lng}}
+
+            apikey={APIKEY}
+          />)): null}
+
 
         </MapView>
-        <Button
+        {/* <Button
           onPress={this.fetchMarkerData}
           title="Learn More"
           color="#841584"
           accessibilityLabel="Learn more about this purple button"
-        />
+        /> */}
       </React.Fragment>
     )
   }
