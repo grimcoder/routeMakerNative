@@ -2,7 +2,7 @@ import React from "react";
 import MapView, { Polyline } from 'react-native-maps';
 import DatastoreAPI from './datastoreAPI'
 import { Button } from 'react-native';
-
+import { Constants, Components } from 'expo';
 
 const APIKEY = 'AIzaSyCO0Nc1bNzKeqTzjcRVczqR53F7KUe7oDM'
 
@@ -86,6 +86,7 @@ export default class App extends React.Component {
       <React.Fragment>
 
         <MapView style={{ flex: 1 }} 
+        provider="google"
         region={{
           latitude: 32.759288351948356,
           longitude: -117.14747565600584,
