@@ -1,7 +1,7 @@
 import React from "react";
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import DatastoreAPI from './datastoreAPI'
-import { Button } from 'react-native';
+import { Button, Linking } from 'react-native';
 import { Constants, Components } from 'expo';
 import MapViewDirections from 'react-native-maps-directions';
 
@@ -22,6 +22,7 @@ export default class App extends React.Component {
   constructor(props) {
     super(props)
     this.fetchMarkerData = this.fetchMarkerData.bind(this);
+    this.openNavigation = this.openNavigation.bind(this);
 
     this.state = {
       isLoading: true,
@@ -42,7 +43,19 @@ export default class App extends React.Component {
     return d = d.map(function (t) { return { latitude: t[0], longitude: t[1] } })
   }
 
+  openNavigation(){
 
+
+    var url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination=Los+Angeles&waypoints=Irvine";
+    Linking.canOpenURL(url).then(supported => {
+        if (!supported) {
+            console.log('Can\'t handle url: ' + url);
+        } else {
+            return Linking.openURL(url);
+        }
+    }).catch(err => console.error('An error occurred', err)); 
+    
+  }
   fetchMarkerData() {
     const data = new DatastoreAPI();
     let markers = []
@@ -117,12 +130,12 @@ export default class App extends React.Component {
 
 
         </MapView>
-        {/* <Button
-          onPress={this.fetchMarkerData}
+        <Button
+          onPress={this.openNavigation}
           title="Learn More"
           color="#841584"
           accessibilityLabel="Learn more about this purple button"
-        /> */}
+        />
       </React.Fragment>
     )
   }
