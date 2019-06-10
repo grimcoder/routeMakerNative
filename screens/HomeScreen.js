@@ -1,188 +1,138 @@
-import React from 'react';
-import {
-  Image,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { WebBrowser } from 'expo';
+import React from "react";
+import MapView, { Polyline, Marker } from 'react-native-maps';
+import DatastoreAPI from './../datastoreAPI'
+import { Button, Linking } from 'react-native';
+import { Constants, Components } from 'expo';
+import MapViewDirections from 'react-native-maps-directions';
+import store from './../data/store'
 
-import { MonoText } from '../components/StyledText';
+const origin = {latitude: 37.3318456, longitude: -122.0296002};
+const destination = {latitude: 37.771707, longitude: -122.4053769};
+const center = {latitude: 32.7174, longitude: -117.1574};
 
-export default class HomeScreen extends React.Component {
-  static navigationOptions = {
-    header: null,
-  };
+const APIKEY = 'AIzaSyCO0Nc1bNzKeqTzjcRVczqR53F7KUe7oDM'
 
-  render() {
-    return (
-      <View style={styles.container}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-          <View style={styles.welcomeContainer}>
-            <Image
-              source={
-                __DEV__
-                  ? require('../assets/images/robot-dev.png')
-                  : require('../assets/images/robot-prod.png')
-              }
-              style={styles.welcomeImage}
-            />
-          </View>
+const _XHR = GLOBAL.originalXMLHttpRequest ?
+  GLOBAL.originalXMLHttpRequest :
+  GLOBAL.XMLHttpRequest
 
-          <View style={styles.getStartedContainer}>
-            {this._maybeRenderDevelopmentModeWarning()}
+export default class App extends React.Component {
 
-            <Text style={styles.getStartedText}>Get started by opening</Text>
+  XMLHttpRequest = _XHR
 
-            <View style={[styles.codeHighlightContainer, styles.homeScreenFilename]}>
-              <MonoText style={styles.codeHighlightText}>screens/HomeScreen.js</MonoText>
-            </View>
+  constructor(props) {
+    super(props)
+    this.fetchMarkerData = this.fetchMarkerData.bind(this);
+    this.openNavigation = this.openNavigation.bind(this);
 
-            <Text style={styles.getStartedText}>
-              Change this text and your app will automatically reload.
-            </Text>
-          </View>
-
-          <View style={styles.helpContainer}>
-            <TouchableOpacity onPress={this._handleHelpPress} style={styles.helpLink}>
-              <Text style={styles.helpLinkText}>Help, it didn’t automatically reload!</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-
-        <View style={styles.tabBarInfoContainer}>
-          <Text style={styles.tabBarInfoText}>This is a tab bar. You can edit it in:</Text>
-
-          <View style={[styles.codeHighlightContainer, styles.navigationFilename]}>
-            <MonoText style={styles.codeHighlightText}>navigation/MainTabNavigator.js</MonoText>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  _maybeRenderDevelopmentModeWarning() {
-    if (__DEV__) {
-      const learnMoreButton = (
-        <Text onPress={this._handleLearnMorePress} style={styles.helpLinkText}>
-          Learn more
-        </Text>
-      );
-
-      return (
-        <Text style={styles.developmentModeText}>
-          Development mode is enabled, your app will be slower but you can use useful development
-          tools. {learnMoreButton}
-        </Text>
-      );
-    } else {
-      return (
-        <Text style={styles.developmentModeText}>
-          You are not in development mode, your app will run at full speed.
-        </Text>
-      );
+    this.state = {
+      isLoading: true,
+      markers: []
     }
   }
 
-  _handleLearnMorePress = () => {
-    WebBrowser.openBrowserAsync('https://docs.expo.io/versions/latest/guides/development-mode');
-  };
+  componentDidMount() {
+    this.fetchMarkerData()
+  }
 
-  _handleHelpPress = () => {
-    WebBrowser.openBrowserAsync(
-      'https://docs.expo.io/versions/latest/guides/up-and-running.html#can-t-see-your-changes'
-    );
-  };
+  decode(t, e) {
+    for (var n, o, u = 0, l = 0, r = 0, d = [], h = 0, i = 0, a = null, c = Math.pow(10, e || 5); u < t.length;) {
+    a = null, h = 0, i = 0; do a = t.charCodeAt(u++) - 63, i |= (31 & a) << h, h += 5;
+    while (a >= 32); n = 1 & i ? ~(i >> 1) : i >> 1, h = i = 0; do a = t.charCodeAt(u++) - 63, i |= (31 & a) << h, h += 5; while (a >= 32); o = 1 & i ? ~(i >> 1) : i >> 1, l += n, r += o, d.push([l / c, r / c])
+    }
+    return d = d.map(function (t) { return { latitude: t[0], longitude: t[1] } })
+  }
+
+  openNavigation(){
+
+    var url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination=Los+Angeles&waypoints=Irvine";
+    Linking.canOpenURL(url).then(supported => {
+        if (!supported) {
+            console.log('Can\'t handle url: ' + url);
+        } else {
+            return Linking.openURL(url);
+        }
+    }).catch(err => console.error('An error occurred', err)); 
+  }
+  
+  fetchMarkerData() {
+    const data = new DatastoreAPI();
+    let markers = []
+    data.get({}, (...props) => {
+
+      // console.log(props[1].data)
+
+      const json = props[1].data.routePoints
+
+      for (let i = 0; i < json.length - 1; i++) {
+
+        const origin = json[i].lat + ',' + json[i].lng;
+
+        const destination = json[i + 1].lat + ',' + json[i + 1].lng;
+
+        // const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${APIKEY}&mode=${mode}`;
+        // fetch(url)
+        //   .then(response => response.json())
+        //   .then(responseJson => {
+        //     if (responseJson.routes.length) {
+        //       markers = [...markers, ...(this.decode(responseJson.routes[0].overview_polyline.points))]\
+        //       this.setState({
+        //         markers
+        //       })
+        //     }
+        //   }).catch(e => { console.warn(e) });
+
+        markers = [...markers, {origin, destination}]
+
+      }
+      this.setState({
+          markers, points: props[1].data.routePoints
+      });
+
+      const mode = 'driving';
+
+    })
+  }
+
+  onPressLearnMore(){
+    this.fetchMarkerData();
+  }
+
+  render() {
+    const { navigation } = this.props;
+    const itemId = navigation.getParam('data');
+    alert(itemId)
+    return (
+      <React.Fragment>
+
+        <MapView style={{ flex: 1 }} 
+            initialRegion={{...center, latitudeDelta: 0.0922, longitudeDelta: 0.0421}}
+            provider="google">
+
+            {this.state.markers.map((marker=><MapViewDirections
+            strokeWidth={3} strokeColor="hotpink"
+
+            {...marker}
+            apikey={APIKEY}
+          />))}
+
+{this.state.points ? this.state.points.map((marker=><Marker
+
+            coordinate={{latitude: marker.lat, longitude: marker.lng}}
+
+            apikey={APIKEY}
+          />)): null}
+
+
+        </MapView>
+        <Button
+          onPress={this.openNavigation}
+          title="Learn More"
+          color="#841584"
+          accessibilityLabel="Learn more about this purple button"
+        />
+      </React.Fragment>
+    )
+  }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  developmentModeText: {
-    marginBottom: 20,
-    color: 'rgba(0,0,0,0.4)',
-    fontSize: 14,
-    lineHeight: 19,
-    textAlign: 'center',
-  },
-  contentContainer: {
-    paddingTop: 30,
-  },
-  welcomeContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  welcomeImage: {
-    width: 100,
-    height: 80,
-    resizeMode: 'contain',
-    marginTop: 3,
-    marginLeft: -10,
-  },
-  getStartedContainer: {
-    alignItems: 'center',
-    marginHorizontal: 50,
-  },
-  homeScreenFilename: {
-    marginVertical: 7,
-  },
-  codeHighlightText: {
-    color: 'rgba(96,100,109, 0.8)',
-  },
-  codeHighlightContainer: {
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 3,
-    paddingHorizontal: 4,
-  },
-  getStartedText: {
-    fontSize: 17,
-    color: 'rgba(96,100,109, 1)',
-    lineHeight: 24,
-    textAlign: 'center',
-  },
-  tabBarInfoContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    ...Platform.select({
-      ios: {
-        shadowColor: 'black',
-        shadowOffset: { height: -3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 20,
-      },
-    }),
-    alignItems: 'center',
-    backgroundColor: '#fbfbfb',
-    paddingVertical: 20,
-  },
-  tabBarInfoText: {
-    fontSize: 17,
-    color: 'rgba(96,100,109, 1)',
-    textAlign: 'center',
-  },
-  navigationFilename: {
-    marginTop: 5,
-  },
-  helpContainer: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  helpLink: {
-    paddingVertical: 15,
-  },
-  helpLinkText: {
-    fontSize: 14,
-    color: '#2e78b7',
-  },
-});
